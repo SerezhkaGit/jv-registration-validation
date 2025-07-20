@@ -4,89 +4,132 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import core.basesyntax.dao.StorageDaoImpl;
 import core.basesyntax.db.Storage;
 import core.basesyntax.model.User;
+import core.basesyntax.service.RegistrationException;
+import core.basesyntax.service.RegistrationService;
+import core.basesyntax.service.RegistrationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class HelloWorldTest {
-    private StorageDaoImpl storageDao;
+class RegistrationServiceImplTest {
+    private RegistrationService registrationService;
 
     @BeforeEach
     void setUp() {
-        storageDao = new StorageDaoImpl();
+        registrationService = new RegistrationServiceImpl();
         Storage.people.clear();
     }
 
     @Test
-    void checkPasswordAndLoginTooShort_throwsException() {
+    void register_validUser_ok() {
         User user = new User();
-        user.setLogin("Serh");
-        user.setPassword("1234567");
+        user.setLogin("validLogin");
+        user.setPassword("validPass");
+        user.setAge(20);
 
-        assertThrows(RuntimeException.class, () -> {
-            storageDao.add(user);
+        User registered = registrationService.register(user);
+
+        assertNotNull(registered);
+        assertEquals("validLogin", registered.getLogin());
+        assertEquals("validPass", registered.getPassword());
+        assertEquals(20, registered.getAge());
+    }
+
+    @Test
+    void register_nullUser_notOk() {
+        assertThrows(RegistrationException.class, () -> {
+            registrationService.register(null);
         });
     }
 
     @Test
-    void checkUserAgeMoreThan18_throwsException() {
+    void register_shortLogin_notOk() {
         User user = new User();
-        user.setLogin("john_doe");
-        user.setPassword("123123");
-        user.setAge(15);
+        user.setLogin("abc");
+        user.setPassword("123456");
+        user.setAge(20);
 
-        assertThrows(RuntimeException.class, () -> {
-            storageDao.add(user);
-        });
-
-    }
-
-    @Test
-    void checkUserLoginIsUnique_throwsException() {
-        User firstUser = new User();
-        firstUser.setLogin("Serezhka1");
-        firstUser.setPassword("wwwwwww");
-        firstUser.setAge(19);
-        storageDao.add(firstUser);
-
-        User secondUSer = new User();
-        secondUSer.setLogin("Serezhka1");
-        secondUSer.setPassword("wwwwwww");
-        secondUSer.setAge(19);
-
-        assertThrows(RuntimeException.class, () -> {
-            storageDao.add(secondUSer);
+        assertThrows(RegistrationException.class, () -> {
+            registrationService.register(user);
         });
     }
 
     @Test
-    void add_validUser_success() {
+    void register_shortPassword_notOk() {
         User user = new User();
-        user.setLogin("john_doe");
-        user.setPassword("123123");
-        user.setAge(18);
+        user.setLogin("validLogin");
+        user.setPassword("123");
+        user.setAge(20);
 
-        User addedUser = storageDao.add(user);
-        assertNotNull(addedUser.getId(), "ID має бути присвоєне");
-        assertEquals("john_doe", addedUser.getLogin());
-        assertEquals("123123", addedUser.getPassword());
-        assertEquals(18, user.getAge());
-        assertEquals(1, Storage.people.size(), "Має бути 1 користувач у базі");
+        assertThrows(RegistrationException.class, () -> {
+            registrationService.register(user);
+        });
     }
 
     @Test
-    void get_userByLogin_success() {
+    void register_ageUnder18_notOk() {
         User user = new User();
-        user.setLogin("Alicerman");
-        user.setPassword("1234567");
-        user.setAge(19);
-        storageDao.add(user);
+        user.setLogin("validLogin");
+        user.setPassword("validPass");
+        user.setAge(17);
 
-        User foundUser = storageDao.get("Alicerman");
-        assertNotNull(foundUser);
-        assertEquals("Alicerman", foundUser.getLogin());
+        assertThrows(RegistrationException.class, () -> {
+            registrationService.register(user);
+        });
     }
 
+    @Test
+    void register_duplicateLogin_notOk() {
+        User user1 = new User();
+        user1.setLogin("duplicate");
+        user1.setPassword("password");
+        user1.setAge(20);
+        registrationService.register(user1);
+
+        User user2 = new User();
+        user2.setLogin("duplicate");
+        user2.setPassword("password");
+        user2.setAge(22);
+
+        assertThrows(RegistrationException.class, () -> {
+            registrationService.register(user2);
+        });
+    }
+
+    @Test
+    void register_nullLogin_notOk() {
+        User user = new User();
+        user.setLogin(null);
+        user.setPassword("password");
+        user.setAge(20);
+
+        assertThrows(RegistrationException.class, () -> {
+            registrationService.register(user);
+        });
+    }
+
+    @Test
+    void register_nullPassword_notOk() {
+        User user = new User();
+        user.setLogin("validLogin");
+        user.setPassword(null);
+        user.setAge(20);
+
+        assertThrows(RegistrationException.class, () -> {
+            registrationService.register(user);
+        });
+    }
+
+    @Test
+    void register_nullAge_notOk() {
+        User user = new User();
+        user.setLogin("validLogin");
+        user.setPassword("validPass");
+        user.setAge(null);
+
+        assertThrows(RegistrationException.class, () -> {
+            registrationService.register(user);
+        });
+    }
 }
