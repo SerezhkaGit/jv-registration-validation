@@ -12,7 +12,7 @@ import core.basesyntax.service.RegistrationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class RegistrationServiceImplTest {
+class HelloWorldTest {
     private RegistrationService registrationService;
 
     @BeforeEach
